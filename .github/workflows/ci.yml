@@ -1,0 +1,93 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Tests unitaires
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [16.x, 18.x, 20.x]
+
+    steps:
+      - name: 📥 Checkout du code
+        uses: actions/checkout@v4
+
+      - name: 🔧 Configuration Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+
+      - name: 📦 Installation des dépendances
+        run: npm ci
+
+      - name: 🔍 Vérification TypeScript
+        run: npx tsc --noEmit
+
+      - name: 🧪 Exécution des tests
+        run: npm test
+
+      - name: 📊 Génération du rapport de couverture
+        run: npm test -- --coverage
+        if: matrix.node-version == '20.x'
+
+      - name: 📈 Upload de la couverture vers Codecov
+        uses: codecov/codecov-action@v3
+        if: matrix.node-version == '20.x'
+        with:
+          files: ./coverage/lcov.info
+          flags: unittests
+          name: codecov-umbrella
+        continue-on-error: true
+
+  lint:
+    name: Qualité du code
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout du code
+        uses: actions/checkout@v4
+
+      - name: 🔧 Configuration Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.x"
+          cache: "npm"
+
+      - name: 📦 Installation des dépendances
+        run: npm ci
+
+      - name: 🔐 Audit de sécurité
+        run: npm audit --audit-level=moderate
+        continue-on-error: true
+
+  build:
+    name: Build de production
+    runs-on: ubuntu-latest
+    needs: [test, lint]
+
+    steps:
+      - name: 📥 Checkout du code
+        uses: actions/checkout@v4
+
+      - name: 🔧 Configuration Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.x"
+          cache: "npm"
+
+      - name: 📦 Installation des dépendances
+        run: npm ci
+
+      - name: 🏗️ Build TypeScript
+        run: npx tsc
+
+      - name: ✅ Succès du build
+        run: echo "✅ Build réussi ! Le code est prêt pour la production."
