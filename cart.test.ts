@@ -19,3 +19,9 @@ test("should calculate total without discount", () => {
     cart.addProduct("Orange", 2);
     expect(cart.getTotal()).toBe(5);
 });
+
+test("should apply 10% discount if total exceeds 100€", () => {
+    const cart = new Cart();
+    cart.addProduct("PC", 120);
+    expect(cart.getTotal()).toBe(108); // 120 - 10%
+});
