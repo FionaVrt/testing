@@ -10,3 +10,12 @@ describe("Cart", () => {
         expect(cart.products[0]).toEqual({ name: "Banane", price: 2 });
     });
 });
+
+
+
+test("should calculate total without discount", () => {
+    const cart = new Cart();
+    cart.addProduct("Pomme", 3);
+    cart.addProduct("Orange", 2);
+    expect(cart.getTotal()).toBe(5);
+});
